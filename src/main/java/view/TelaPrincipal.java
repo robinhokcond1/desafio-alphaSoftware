@@ -45,6 +45,7 @@ public class TelaPrincipal extends JFrame {
         JButton btnExcluir = new JButton("Excluir");
         JButton btnPesquisar = new JButton("Pesquisar");
 
+
         // Adicionar ações
         btnIncluir.addActionListener(e -> incluirLivro());
         btnEditar.addActionListener(e -> editarLivro());
