@@ -110,7 +110,8 @@ public class TelaPrincipal extends JFrame {
     }
 
     private void pesquisarLivro() {
-        JOptionPane.showMessageDialog(this, "Funcionalidade de pesquisa ainda não implementada.");
-        // Depois podemos abrir uma caixa de diálogo para buscar por título, autor ou ISBN
+        PesquisaLivroDialog dialog = new PesquisaLivroDialog(this);
+        dialog.setVisible(true);
     }
+
 }
