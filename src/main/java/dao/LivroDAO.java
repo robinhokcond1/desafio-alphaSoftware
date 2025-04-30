@@ -1,5 +1,6 @@
 package dao;
 
+import model.CampoBusca;
 import model.Livro;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -39,18 +40,18 @@ public class LivroDAO {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public List<Livro> listarTodos() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("from Livro").list();
+            return session.createQuery("from Livro", Livro.class).list();
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public List<Livro> buscarPorCampo(String campo, String valor) {
+    public List<Livro> buscarPorCampo(CampoBusca campo, String valor) {
+        String nomeCampo = campo.getNomeCampo();
+
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            String hql = "from Livro where " + campo + " like :valor";
-            return session.createQuery(hql)
+            String hql = "from Livro where " + nomeCampo + " like :valor";
+            return session.createQuery(hql, Livro.class)
                     .setParameter("valor", "%" + valor + "%")
                     .list();
         }
