@@ -2,6 +2,7 @@ package view;
 
 import dao.LivroDAO;
 import model.Livro;
+import util.OpenLibraryService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +27,7 @@ public class CadastroLivroDialog extends JDialog {
         this.livroDAO = new LivroDAO();
         this.onSaveCallback = onSaveCallback;
 
-        setSize(400, 400);
+        setSize(450, 420);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
 
@@ -35,7 +36,14 @@ public class CadastroLivroDialog extends JDialog {
     }
 
     private void initComponents() {
-        JPanel painel = new JPanel(new GridLayout(7, 2, 5, 5));
+        JPanel painel = new JPanel(new GridLayout(9, 2, 5, 5));
+
+        // 🔍 Instrução de uso
+        JLabel lblInstrucao = new JLabel("🔍 Você pode buscar os dados preenchendo apenas o ISBN:");
+        lblInstrucao.setForeground(Color.BLUE);
+        lblInstrucao.setFont(lblInstrucao.getFont().deriveFont(Font.ITALIC, 12f));
+        painel.add(lblInstrucao);
+        painel.add(new JLabel()); // célula vazia para alinhamento
 
         painel.add(new JLabel("Título:"));
         txtTitulo = new JTextField();
@@ -48,6 +56,11 @@ public class CadastroLivroDialog extends JDialog {
         painel.add(new JLabel("ISBN:"));
         txtIsbn = new JTextField();
         painel.add(txtIsbn);
+
+        JButton btnBuscarIsbn = new JButton("Buscar pelo ISBN");
+        btnBuscarIsbn.addActionListener(e -> preencherViaIsbn());
+        painel.add(new JLabel()); // célula vazia para alinhar
+        painel.add(btnBuscarIsbn);
 
         painel.add(new JLabel("Editora:"));
         txtEditora = new JTextField();
@@ -85,6 +98,28 @@ public class CadastroLivroDialog extends JDialog {
                     livro.getDataPublicacao() != null ? livro.getDataPublicacao().toString() : ""
             );
             txtLivrosSemelhantes.setText(livro.getLivrosSemelhantes());
+        }
+    }
+
+    private void preencherViaIsbn() {
+        String isbn = txtIsbn.getText().trim();
+        if (isbn.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Digite um ISBN antes de buscar.");
+            return;
+        }
+
+        Livro resultado = OpenLibraryService.buscarLivroPorIsbn(isbn);
+
+        if (resultado.getTitulo() != null) {
+            txtTitulo.setText(resultado.getTitulo());
+            txtAutores.setText(resultado.getAutores());
+            txtEditora.setText(resultado.getEditora());
+            txtDataPublicacao.setText(
+                    resultado.getDataPublicacao() != null ? resultado.getDataPublicacao().toString() : ""
+            );
+            JOptionPane.showMessageDialog(this, "Dados preenchidos com sucesso!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Livro não encontrado na OpenLibrary.");
         }
     }
 
