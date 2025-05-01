@@ -37,8 +37,6 @@ public class CadastroLivroDialog extends JDialog {
 
     private void initComponents() {
         JPanel painel = new JPanel(new GridLayout(9, 2, 5, 5));
-
-        // 🔍 Instrução de uso
         JLabel lblInstrucao = new JLabel("🔍 Você pode buscar os dados preenchendo apenas o ISBN:");
         lblInstrucao.setForeground(Color.BLUE);
         lblInstrucao.setFont(lblInstrucao.getFont().deriveFont(Font.ITALIC, 12f));
@@ -103,8 +101,14 @@ public class CadastroLivroDialog extends JDialog {
 
     private void preencherViaIsbn() {
         String isbn = txtIsbn.getText().trim();
+
         if (isbn.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Digite um ISBN antes de buscar.");
+            return;
+        }
+
+        if (!isbn.matches("\\d{13}")) {
+            JOptionPane.showMessageDialog(this, "ISBN inválido. O valor deve conter exatamente 13 dígitos numéricos.");
             return;
         }
 
@@ -125,17 +129,37 @@ public class CadastroLivroDialog extends JDialog {
 
     private void salvar() {
         try {
-            livro.setTitulo(txtTitulo.getText());
-            livro.setAutores(txtAutores.getText());
-            livro.setIsbn(txtIsbn.getText());
-            livro.setEditora(txtEditora.getText());
+            String titulo = txtTitulo.getText().trim();
+            String autores = txtAutores.getText().trim();
+            String isbn = txtIsbn.getText().trim();
+
+            if (titulo.isEmpty() || autores.isEmpty() || isbn.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Preencha todos os campos obrigatórios (Título, Autor e ISBN).");
+                return;
+            }
+
+            livro.setTitulo(titulo);
+            livro.setAutores(autores);
+            livro.setIsbn(isbn);
+            livro.setEditora(txtEditora.getText().trim());
+            livro.setLivrosSemelhantes(txtLivrosSemelhantes.getText().trim());
 
             String dataTexto = txtDataPublicacao.getText().trim();
             if (!dataTexto.isEmpty()) {
-                livro.setDataPublicacao(LocalDate.parse(dataTexto));
-            }
+                try {
+                    int ano = LocalDate.parse(dataTexto).getYear();
+                    int anoAtual = LocalDate.now().getYear();
+                    if (ano < 1500 || ano > anoAtual) {
+                        JOptionPane.showMessageDialog(this, "Ano da data de publicação inválido.");
+                        return;
+                    }
 
-            livro.setLivrosSemelhantes(txtLivrosSemelhantes.getText());
+                    livro.setDataPublicacao(LocalDate.parse(dataTexto));
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "Formato inválido para data (use AAAA-MM-DD).");
+                    return;
+                }
+            }
 
             livroDAO.salvar(livro);
             JOptionPane.showMessageDialog(this, "Livro salvo com sucesso!");
@@ -145,4 +169,5 @@ public class CadastroLivroDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Erro ao salvar livro: " + ex.getMessage());
         }
     }
+
 }
