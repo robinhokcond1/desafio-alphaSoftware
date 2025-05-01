@@ -2,23 +2,15 @@ package view;
 
 import dao.LivroDAO;
 import model.Livro;
+import util.LivroCsvExporter;
+import util.LivroCsvImporter;
+import util.LivroXmlExporter;
 import util.OpenLibraryService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import java.awt.*;
 import java.io.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,7 +22,7 @@ public class TelaPrincipal extends JFrame {
     private LivroDAO livroDAO;
 
     public TelaPrincipal() {
-        livroDAO = new LivroDAO();
+        this.livroDAO = new LivroDAO();
         setTitle("Biblioteca - Catálogo de Livros");
         setSize(900, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -144,51 +136,7 @@ public class TelaPrincipal extends JFrame {
         if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         File arquivo = fileChooser.getSelectedFile();
-        int totalImportados = 0;
-        int totalFalhas = 0;
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(arquivo))) {
-            String linha;
-            boolean primeiraLinha = true;
-            while ((linha = reader.readLine()) != null) {
-                if (primeiraLinha) {
-                    primeiraLinha = false;
-                    continue;
-                }
-
-                String[] campos = linha.split(",", -1);
-                if (campos.length >= 6) {
-                    try {
-                        String isbn = campos[2].trim();
-                        Livro livro = livroDAO.buscarPorIsbn(isbn);
-                        if (livro == null) {
-                            livro = new Livro();
-                            livro.setIsbn(isbn);
-                        }
-
-                        livro.setTitulo(campos[0].trim());
-                        livro.setAutores(campos[1].trim());
-                        livro.setEditora(campos[3].trim());
-                        if (!campos[4].isEmpty()) {
-                            livro.setDataPublicacao(LocalDate.parse(campos[4].trim()));
-                        }
-                        livro.setLivrosSemelhantes(campos[5].trim());
-
-                        livroDAO.salvar(livro);
-                        totalImportados++;
-                    } catch (Exception ex) {
-                        totalFalhas++;
-                        System.err.println("Erro ao importar linha: " + linha);
-                    }
-                }
-            }
-
-            carregarTabela();
-            JOptionPane.showMessageDialog(this,
-                    "Importação concluída!\nImportados: " + totalImportados + "\nFalhas: " + totalFalhas);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao ler o arquivo: " + e.getMessage());
-        }
+        new LivroCsvImporter(livroDAO).importar(arquivo, this::carregarTabela, this);
     }
 
     private void exportarCsv() {
@@ -196,30 +144,15 @@ public class TelaPrincipal extends JFrame {
         if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
         File arquivo = fileChooser.getSelectedFile();
-        if (!arquivo.getName().toLowerCase().endsWith(".csv")) {
-            arquivo = new File(arquivo.getAbsolutePath() + ".csv");
-        }
+        new LivroCsvExporter(livroDAO).exportar(arquivo, this);
+    }
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(arquivo))) {
-            writer.write("titulo,autores,isbn,editora,dataPublicacao,livrosSemelhantes");
-            writer.newLine();
+    private void exportarXml() {
+        JFileChooser fileChooser = new JFileChooser();
+        if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
-            for (Livro livro : livroDAO.listarTodos()) {
-                writer.write(String.join(",",
-                        tratarCsv(livro.getTitulo()),
-                        tratarCsv(livro.getAutores()),
-                        tratarCsv(livro.getIsbn()),
-                        tratarCsv(livro.getEditora()),
-                        livro.getDataPublicacao() != null ? livro.getDataPublicacao().toString() : "",
-                        tratarCsv(livro.getLivrosSemelhantes())
-                ));
-                writer.newLine();
-            }
-
-            JOptionPane.showMessageDialog(this, "Exportação concluída com sucesso!");
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao exportar CSV: " + e.getMessage());
-        }
+        File arquivo = fileChooser.getSelectedFile();
+        new LivroXmlExporter(livroDAO).exportar(arquivo, this);
     }
 
     private void importarIsbnsViaOpenLibrary() {
@@ -232,7 +165,7 @@ public class TelaPrincipal extends JFrame {
         loadingDialog.setSize(350, 100);
         loadingDialog.setLocationRelativeTo(this);
         loadingDialog.setLayout(new BorderLayout());
-        loadingDialog.add(new JLabel("⏳ Importando livros da OpenLibrary, aguarde...", JLabel.CENTER), BorderLayout.CENTER);
+        loadingDialog.add(new JLabel("\u23F3 Importando livros da OpenLibrary, aguarde...", JLabel.CENTER), BorderLayout.CENTER);
 
         new Thread(() -> {
             AtomicInteger totalImportados = new AtomicInteger();
@@ -313,55 +246,5 @@ public class TelaPrincipal extends JFrame {
         }).start();
 
         loadingDialog.setVisible(true);
-    }
-
-    private void exportarXml() {
-        JFileChooser fileChooser = new JFileChooser();
-        if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
-
-        File arquivo = fileChooser.getSelectedFile();
-        if (!arquivo.getName().toLowerCase().endsWith(".xml")) {
-            arquivo = new File(arquivo.getAbsolutePath() + ".xml");
-        }
-
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-
-            Element root = doc.createElement("livros");
-            doc.appendChild(root);
-
-            for (Livro livro : livroDAO.listarTodos()) {
-                Element el = doc.createElement("livro");
-                el.appendChild(criarElemento(doc, "titulo", livro.getTitulo()));
-                el.appendChild(criarElemento(doc, "autores", livro.getAutores()));
-                el.appendChild(criarElemento(doc, "isbn", livro.getIsbn()));
-                el.appendChild(criarElemento(doc, "editora", livro.getEditora()));
-                el.appendChild(criarElemento(doc, "dataPublicacao",
-                        livro.getDataPublicacao() != null ? livro.getDataPublicacao().toString() : ""));
-                el.appendChild(criarElemento(doc, "livrosSemelhantes", livro.getLivrosSemelhantes()));
-                root.appendChild(el);
-            }
-
-            Transformer transformer = TransformerFactory.newInstance().newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.transform(new DOMSource(doc), new StreamResult(arquivo));
-
-            JOptionPane.showMessageDialog(this, "Exportação concluída com sucesso!");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao exportar XML: " + e.getMessage());
-        }
-    }
-
-    private Element criarElemento(Document doc, String nome, String valor) {
-        Element el = doc.createElement(nome);
-        el.appendChild(doc.createTextNode(valor != null ? valor : ""));
-        return el;
-    }
-
-    private String tratarCsv(String texto) {
-        if (texto == null) return "";
-        return texto.replace(",", " ").replaceAll("\\R", " ").trim();
     }
 }
