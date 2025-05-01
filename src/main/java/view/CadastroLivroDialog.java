@@ -127,7 +127,7 @@ public class CadastroLivroDialog extends JDialog {
         }
     }
 
-    private void salvar() {
+    public void salvar() {
         try {
             String titulo = txtTitulo.getText().trim();
             String autores = txtAutores.getText().trim();
@@ -168,6 +168,17 @@ public class CadastroLivroDialog extends JDialog {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro ao salvar livro: " + ex.getMessage());
         }
+    }
+
+    public JTextField getTxtTitulo() { return txtTitulo; }
+    public JTextField getTxtAutores() { return txtAutores; }
+    public JTextField getTxtIsbn() { return txtIsbn; }
+    public JTextField getTxtEditora() { return txtEditora; }
+    public JTextField getTxtDataPublicacao() { return txtDataPublicacao; }
+    public JTextField getTxtLivrosSemelhantes() { return txtLivrosSemelhantes; }
+
+    public void setLivroDAO(LivroDAO livroDAO) {
+        this.livroDAO = livroDAO;
     }
 
 }

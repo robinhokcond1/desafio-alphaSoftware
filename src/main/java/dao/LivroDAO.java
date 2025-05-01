@@ -58,9 +58,11 @@ public class LivroDAO {
     }
     public Livro buscarPorIsbn(String isbn) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("FROM Livro WHERE isbn = :isbn", Livro.class)
+            List<Livro> livros = session.createQuery("FROM Livro WHERE isbn = :isbn", Livro.class)
                     .setParameter("isbn", isbn)
-                    .uniqueResult();
+                    .setMaxResults(1)
+                    .list();
+            return livros.isEmpty() ? null : livros.get(0);
         }
     }
 
