@@ -27,6 +27,13 @@ Permitir o cadastro de livros com os dados:
 git clone git clone https://github.com/robinhokcond1/desafio-alphaSoftware.git
 cd desafio-java-backend
 ```
+### 🐳 Subindo banco de dados com Docker
+
+Execute este comando no terminal para subir o MySQL:
+
+```bash
+docker-compose up -d
+
 
 ### Compilar e executar
 ```bash
