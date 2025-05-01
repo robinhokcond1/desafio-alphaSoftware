@@ -15,24 +15,28 @@ Permitir o cadastro de livros com os dados:
 
 ---
 
-## 🚀 Como executar o projeto
-
-### Pré-requisitos
+## ✅ Pré-requisitos
 - Java 17+
 - Maven
-- MySQL ou outro banco relacional compatível com Hibernate
+- MySQL (caso deseje rodar fora do H2)
 
-### Passos
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/robinhokcond1/desafio-alphaSoftware.git
-   ```
-2. Configure o banco de dados no `hibernate.cfg.xml`
-3. Execute o projeto no IntelliJ (ou outro IDE com suporte a Java Swing)
-4. A tela principal será exibida com todas as funcionalidades
+## 📦 Como executar
 
----
+### Clonar o projeto
+```bash
+git clone git clone https://github.com/robinhokcond1/desafio-alphaSoftware.git
+cd desafio-java-backend
+```
 
+### Compilar e executar
+```bash
+mvn clean compile exec:java -Dexec.mainClass="app.BibliotecaApp"
+```
+
+### Rodar testes
+```bash
+mvn test
+```
 ## ✅ Funcionalidades implementadas
 
 - [x] CRUD completo de livros
@@ -46,8 +50,21 @@ Permitir o cadastro de livros com os dados:
 - [x] Feedback de progresso com diálogo de carregamento
 - [x] Validação de ISBN e campos obrigatórios
 - [x] Mensagens de erro claras para o usuário final
+- [x] Cobertura de testes automatizados (DAO, validações)
 
 ---
+> Durante os testes é usado o banco H2 em memória, configurado automaticamente via Hibernate.
+
+## 📁 Estrutura do Projeto
+```
+├── model           # Entidades JPA (Livro)
+├── dao             # Acesso a dados (LivroDAO)
+├── util            # Serviços auxiliares (import/export, integração)
+├── view            # Interfaces Swing
+├── app             # Classe principal (BibliotecaApp)
+├── test            # Testes unitários (JUnit + H2)
+└── resources       # Arquivo de configuração Hibernate
+```
 
 ## 📁 Exemplo de CSV para importação
 ```csv
